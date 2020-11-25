@@ -1,0 +1,57 @@
+#This is the small function collection of Golo Voelker
+
+def polynomialcostfunction(inputdata,variable,degreeofpolynomial):
+  
+#This is a function to calculate model parameters m for least squares
+#(costfunction) assuming a polynomial of any desired degree for
+#any data over a "time/space" variable.
+#The model parameters m are calculated as follows:
+# m=(G'G)^(-) * G'd
+#Where
+    #m : model parameters
+    #G : matrix containing variables in the form:
+                                   #    [1 x1 x1^(2)... ;
+                                   #     1 x2 x2^(2)...
+                                   #     .  .  .    ...]
+    #d : observed data
+
+#-------------------------------------------------------------------------%
+# 3 inputvariables are required:
+
+#polynomialcostfunction(1,2,3)
+    # 1. The desired degree of the polynomial
+    # 2. The variable x, for the observed data
+    # 3. The observed data.
+    
+    
+# Output is the resulting curve named "result_inv" and the inverse m
+
+#-------------------------------------------------------------------------%
+
+    n = degreeofpolynomial
+    x = variable
+    d = inputdata
+    transpose = np.shape([d])
+    transpose = np.array([transpose]) #Ensure that d is a vector, else transpose
+    if transpose[0,1]>transpose[0,0]:
+        d = d.T
+    transpose = np.shape([x])
+    transpose = np.array([transpose]) #Ensure that x is a vector, else transpose
+    if transpose[0,1]>transpose[0,0]:
+        x = x.T
+    
+
+
+    Gh = np.zeros((len(x),n)) #Generate G
+
+    for i in range(0,len(x)):
+        for v in range(0,n):
+            Gh[i][n-1-v]=x[i]**v
+        
+    G_Th=np.transpose(Gh)
+    G_Th_dot_Gh=np.dot(G_Th,Gh)
+    m_est_h_inv=np.dot(np.dot(np.linalg.inv(G_Th_dot_Gh),G_Th),d)
+    m=m_est_h_inv
+    result_inv=np.dot(Gh,m_est_h_inv)
+    plt.plot(year,temp,x,result_inv)
+    return result_inv
