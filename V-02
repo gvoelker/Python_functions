@@ -123,4 +123,36 @@ def deconvolute(independentVariable,Data,tau,lambd):
     smoothedDeconvolutedData = np.linalg.lstsq(G_ct@G+lambd*A_ct@A,G_ct@d)
     smoothedDeconvolutedData = smoothedDeconvolutedData[0]
     deconvolutedData=m
-    return smoothedDeconvolutedData, deconvolutedData   
+    return smoothedDeconvolutedData, deconvolutedData 
+#+++END OF FUNCTION+++++
+
+#+++++LEAST SQUARE SMOOTHING+++++
+#This function uses the least squre method to smooth Data the function was initially written for temperature Data
+#+++++INPUT+++++
+The function needs 3 input variables:
+independentVariable: the x-Axis like time or depth
+Data: the y-Axis like tmperature or pressure
+lamd: the smoothening facor. The smaller it is, the smaller will be the smoothening
+#+++++OUTPUT+++++
+The function outputs the smoothed Data. The amount of Data points is not changed
+
+def LeastSquareSmoothing(independentVariable,Data,lambd):
+    lambd = lambd
+    d = Data
+    x = independentVariable
+    dt = d[1]-d[0]
+    D = np.zeros((len(x),len(x)))
+    for i in range(len(x)-1):
+        D[i,i] = 1
+        D[i,i+1] = -1
+    A = ((np.divide(1,dt))**2)*(D@D)
+    G = np.zeros((len(x),len(x)))
+    for i in range(len(x)):
+        G[i,i] = 1
+    G_ct = G.conj().T
+    A_ct = A.conj().T
+    m = np.linalg.lstsq((G_ct@G+lambd*A_ct@A),(G_ct@d))
+    m= m[0]
+    smoothedData = m@G
+    return smoothedData
+#+++++END OF FUNCTION+++++
