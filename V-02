@@ -1,7 +1,6 @@
-#This is the small function collection of Golo Voelker
+#This is the small function collection of Golo Voelker (gvoelker@avoutta.de)
 
-def polynomialcostfunction(inputdata,variable,degreeofpolynomial):
-  
+#+++++COSTFUNCTION+++++
 #This is a function to calculate model parameters m for least squares
 #(costfunction) assuming a polynomial of any desired degree for
 #any data over a "time/space" variable.
@@ -14,20 +13,18 @@ def polynomialcostfunction(inputdata,variable,degreeofpolynomial):
                                    #     1 x2 x2^(2)...
                                    #     .  .  .    ...]
     #d : observed data
-
-#-------------------------------------------------------------------------%
-# 3 inputvariables are required:
+#+++++INPUT+++++
+inputvariables are required:
 
 #polynomialcostfunction(1,2,3)
     # 1. The desired degree of the polynomial
     # 2. The variable x, for the observed data
     # 3. The observed data.
     
-    
-# Output is the resulting curve named "result_inv" and the inverse m
+#+++++OUTPUT+++++    
+Output is the resulting curve named "result_inv" and the inverse m
 
-#-------------------------------------------------------------------------%
-
+def polynomialcostfunction(inputdata,variable,degreeofpolynomial):
     n = degreeofpolynomial
     x = variable
     d = inputdata
@@ -55,8 +52,9 @@ def polynomialcostfunction(inputdata,variable,degreeofpolynomial):
     result_inv=np.dot(Gh,m_est_h_inv)
     plt.plot(year,temp,x,result_inv)
     return result_inv
+#+++++END OF FUNCTION+++++
 
-
+#+++++BOOTSTRAP+++++
 def bootstrap(data, n=1000, func=np.mean):
     """
     Generate `n` bootstrap samples, evaluating `func`
@@ -82,3 +80,47 @@ def bootstrap(data, n=1000, func=np.mean):
         u_indx = int(np.floor(n*u_pval))
         return(simulations[l_indx],simulations[u_indx])
     return(ci)
+#+++++END OF FUCTION+++++    
+
+#+++++DECONVOLUTION FUNCTION+++++
+#This is a function to deconvolute data. The code was written to deconvolute temperature Data with a known tau.
+#In addition to that it includes a function to smooth the raw data before the deconvolution. The smoothening factor is lambd
+#+++++INPUTS+++++
+#The function needs the independent variable (like time), the data (like the temperature), the deconvolution factor (tau) and the smoothening factor (lambd)
+#+++++OUTPUTS+++++
+#The function outputs the deconvulated data and the smoothed deconvulated data
+def deconvolute(independentVariable,Data,tau,lambd):
+
+    tau = tau
+    d = Data
+    x = independentVariable
+    g = np.zeros((len(d)))
+    dt = x[1]-x[0]
+    for i in range(0,len(d)):
+        g[i] = (1/tau)*np.exp(-x[i]/tau)*dt
+            
+    G = np.zeros((len(x),len(x)))
+    for i in range(0,len(g)):
+        last = len(g)-i+1
+        G[i:len(g),i]=g[0:last-1]
+        #G[i:len(g),i]=np.transpose(g[0:last-1])
+        
+        #D = np.diag(np.diag(np.ones(len(x))-2))
+    D = np.zeros((len(x),len(x)))
+    for i in range(len(x)):
+        D[i,i] =-1
+    
+    for i in range(0,len(x)-1):
+        D[i,i+1] = 1
+    
+
+    #D[:,len(D)-1] = [None]*len(D)
+    a = (np.divide(1,(x[1]-x[0])))**2
+    A = np.multiply(a,(D@D))
+    G_ct = G.conj().T
+    A_ct = A.conj().T
+    m = np.linalg.solve(G_ct@G,G_ct@d)
+    smoothedDeconvolutedData = np.linalg.lstsq(G_ct@G+lambd*A_ct@A,G_ct@d)
+    smoothedDeconvolutedData = smoothedDeconvolutedData[0]
+    deconvolutedData=m
+    return smoothedDeconvolutedData, deconvolutedData   
